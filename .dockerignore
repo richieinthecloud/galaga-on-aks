@@ -1,0 +1,12 @@
+# keep the build context small and the image clean
+# anyting listed here is NOT sent to the Docker daemon during a build.
+.git
+.gitignore
+*.md
+infra/
+k8s/
+**/README.md
+.terraform/
+*.tfstate
+*.tfstate.*
+.DS_Store

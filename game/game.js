@@ -164,7 +164,133 @@ to load, the game draws a colored shape instead, so it stays playable even befor
         // move enemy bullets
         enemyBullets.forEach((b) => (b.y += b.speed));
         enemyBullets = enemyBullets.filter((b) => b.y < H);
-    }
-}
 
-)
+        // formation drift: reverse and drop down when hitting an edge
+        let minX = Infinity, maxX = -Infinity;
+        enemies.forEach((e) => {
+            if (!e.alive) return;
+            minX = Math.min(minX, e.x);
+            maxX = Math.max(maxX, e.x + e.w);
+        });
+        if (minX <= 0 || maxX >= W) {
+            formationDir *= -1;
+            enemies.forEach((e) => (e.y += 16));
+        }
+        enemies.forEach((e) => (e.x += formationDir * formationSpeed));
+
+        // enemies randomly fire
+        enemies.forEach((e) => {
+            if (e.alive && Math.random() < 0.0015) {
+                enemyBullets.push({ x: e.x + e.w / 2 - 2, y: e.y + e.h, w: 4, h: 10, speed: 4 });
+            }
+        });
+
+        // collision: player bullets vs enemies 
+        bullets.forEach((b) => {
+            enemies.forEach((e) => {
+                if (e.alive && rectsOverlap(b, e)) {
+                    e.alive = false;
+                    b.y = -999; // mark bullet for removal
+                    score += e.points;
+                    updateHUD();
+                }
+            });
+        });
+        bullets = bullets.filter((b) => b.y + b.h > 0);
+
+        // collision: enemy bullets vs player
+        enemies.forEach((e) => {
+            if (rectsOverlap(b, player)) {
+                b.y = H + 999;
+                loseLife();
+                e.alive = false;
+            }
+        });
+
+        // wave cleared -> next, slightly faster wave
+        if (enemies.every((e) => !e.alive)) {
+            formationSpeed += 0.25;
+            spawnEnemies();
+        }
+    }
+
+    function loseLife() {
+        lives--;
+        updateHUD();
+        enemyBullets = [];
+        if (lives <= 0) gameOver();
+    }
+
+    function rectsOverlap(a, b) {
+        return (
+            a.x < b.x + b.w &&
+            a.x + a.w > b.x &&
+            a.y < b.y + b.h &&
+            a.y + a.h > b.y
+        );
+    }
+
+    // render loop
+    function draw() {
+        // stars in the background
+        ctx.fillStyle = "#05060f";
+        ctx.fillRect(0, 0, W, H);
+        drawStars();
+
+        if (state === STATE.PLAYING) {
+            // player
+            drawSprite(sprites.player, player, "#4df3ff");
+
+            // enemies
+            enemies.forEach((e) => {
+                if (e.alive) drawSprite(sprites.enemy, e, "#ff5a5a");
+            });
+
+            // player bullet
+            bullets.forEach((b) => drawSprite(sprites.bullet, b, "#ffd23f"));
+
+            // enemy bullets 
+            ctx.fillStyle = "#ff8c00";
+            enemyBullets.forEach((b) => ctx.fillRect(b.x, b.y, b.w, b.h));
+        }
+    }
+
+    // draw a sprite image, or a fallback shape if the image isnt ready
+    function drawSprite(img, obj, fallbackColor) {
+        if (img && img.loaded) {
+            ctx.drawImage(img, obj.x, obj.y, obj.w, obj.h);
+        } else {
+            ctx.fillStyle = fallbackColor;
+            ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+        }
+    }
+
+    // twinkling stars
+    const stars = Array.from({ length: 60 }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.5,
+        s: Math.random() * 0.5 + 0.2,
+    }));
+    function drawStars() {
+        ctx.fillStyle = "#ffffff";
+        stars.forEach((st) => {
+            st.y += st.s;
+            if (st.y > H) st.y = 0;
+            ctx.globalAlpha = 0.6;
+            ctx.fillRect(st.x, st.y, st.r, st.r);
+        });
+        ctx.globalAlpha = 1;
+    }
+
+    // main game loop
+    function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    //start from the menu screen
+    overlay.classList.remove("hidden");
+    loop();
+})();

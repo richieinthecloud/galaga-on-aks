@@ -69,13 +69,13 @@ to load, the game draws a colored shape instead, so it stays playable even befor
     let formationSpeed = 0.6;
 
     // player input
-    const key = {};
+    const keys = {};
     window.addEventListener("keydown", (e) => {
         keys[e.key] = true;
         if (e.key === " ") e.preventDefault(); // stop page scroll on space
         if (e.key === "Enter") handleStartInput();
     });
-    window.addEventListener("keyup", (e) => (keys[e.keys] = false));
+    window.addEventListener("keyup", (e) => (keys[e.key] = false));
 
     // touch / click to start (mobile-friendly)
     canvas.addEventListener("pointerdown", handleStartInput);
@@ -119,7 +119,7 @@ to load, the game draws a colored shape instead, so it stays playable even befor
         formationDir = 1;
         formationSpeed = 0.6;
         spawnEnemies();
-        updateHud();
+        updateHUD();
         overlay.classList.add("hidden");
         state = STATE.PLAYING;
     }
@@ -132,7 +132,7 @@ to load, the game draws a colored shape instead, so it stays playable even befor
             highEl.textContent = highScore;
         }
         overlayTitle.textContent = "Game Over";
-        overlayText.textContent = 'Score ${score} - Press ENTER or TAP to play again';
+        overlayText.textContent = `Score ${score} - Press ENTER or TAP to play again`;
         overlay.classList.remove("hidden");
     }
 
@@ -202,6 +202,14 @@ to load, the game draws a colored shape instead, so it stays playable even befor
         enemies.forEach((e) => {
             if (rectsOverlap(b, player)) {
                 b.y = H + 999;
+                loseLife();
+            }
+        });
+        enemyBullets = enemyBullets.filter((b) => b.y < H);
+
+        //enemy reaches the player line / bottom
+        enemies.forEach((e) => {
+            if (e.alive && e.y + e.h >= player.y) {
                 loseLife();
                 e.alive = false;
             }

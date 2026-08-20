@@ -67,6 +67,104 @@ to load, the game draws a colored shape instead, so it stays playable even befor
     // formation movement (idle side to side drift)
     let formationDir = 1; // 1 = right, -1 = left
     let formationSpeed = 0.6;
+
+    // player input
+    const key = {};
+    window.addEventListener("keydown", (e) => {
+        keys[e.key] = true;
+        if (e.key === " ") e.preventDefault(); // stop page scroll on space
+        if (e.key === "Enter") handleStartInput();
+    });
+    window.addEventListener("keyup", (e) => (keys[e.keys] = false));
+
+    // touch / click to start (mobile-friendly)
+    canvas.addEventListener("pointerdown", handleStartInput);
+    overlay.addEventListener("pointerdown", handleStartInput);
+
+    function handleStartInput() {
+        if (state === STATE.MENU || state === STATE.OVER) startGame();
+    }
+
+    // enemy formation setup 
+    function spawnEnemies() {
+        enemies = [];
+        const rows = 4;
+        const cols = 8;
+        const gapX = 48;
+        const gapY = 44;
+        const offsetX = (W - (cols - 1) * gapX) / 2;
+        const offsetY = 60;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                enemies.push({
+                    x: offsetX + c * gapX - 16,
+                    y: offsetY + r * gapY,
+                    w: 32,
+                    h: 32,
+                    alive: true,
+                    points: (rows - r) * 10 // front rows worth more
+                });
+            }
+        }
+    }
+
+    // start / reset
+    function startGame() {
+        score = 0;
+        lives = 3;
+        bullets = [];
+        enemyBullets = [];
+        player.x = W / 2 - player.w / 2;
+        formationDir = 1;
+        formationSpeed = 0.6;
+        spawnEnemies();
+        updateHud();
+        overlay.classList.add("hidden");
+        state = STATE.PLAYING;
+    }
+
+    function gameOver() {
+        state = STATE.OVER;
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("galaga-high", String(highScore));
+            highEl.textContent = highScore;
+        }
+        overlayTitle.textContent = "Game Over";
+        overlayText.textContent = 'Score ${score} - Press ENTER or TAP to play again';
+        overlay.classList.remove("hidden");
+    }
+
+    function updateHUD() {
+        scoreEl.textContent = score;
+        livesEl.textContent = lives;
+    }
+
+    // update loop
+    function update() {
+        if (state !== STATE.PLAYING) return;
+
+        // player movement
+        if (keys["ArrowLeft"] || keys["a"] || keys["A"]) player.x -= player.speed;
+        if (keys["ArrowRight"] || keys["d"] || keys["D"]) player.x += player.speed;
+        player.x = Math.max(0, Math.min(W - player.w, player.x));
+
+        // player shooting
+        if (player.cooldown > 0) player.cooldown--;
+        if ((keys[" "] || keys["Spacebar"]) && player.cooldown === 0) {
+            bullets.push({ x: player.x + player.w / 2 - 2, y: player.y, w: 4, h: 12, speed: 8 });
+            player.cooldown = 14; // fire rate limiter
+        }
+
+        // move player bullets
+        bullets.forEach((b) => b.y -= b.speed);
+        bullets = bullets.filter((b) => b.y + b.h > 0);
+
+        // move enemy bullets
+        enemyBullets.forEach((b) => (b.y += b.speed));
+        enemyBullets = enemyBullets.filter((b) => b.y < H);
+    }
 }
 
 )

@@ -17,7 +17,7 @@ spec:
   template:
     metadata:
       labels:
-        app: galga # every pod gets this label here
+        app: galaga # every pod gets this label here
     spec:
       containers:
         - name: galaga
@@ -31,7 +31,7 @@ spec:
             limits:
               cpu: 200m # 0.2 of a CPU core
               memory: 64Mi
-          LivenessProbe: # if /healthz stops responding, K8s starts the pod automatically
+          livenessProbe: # if /healthz stops responding, K8s starts the pod automatically
             httpGet:
               path: /healthz
               port: 80

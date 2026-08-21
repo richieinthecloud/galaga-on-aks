@@ -2,7 +2,7 @@
 
 output "acr_login_server" {
   description = "The ACR hostname you push images to."
-  value = azurerm_container_registry.act.login_server
+  value = azurerm_container_registry.acr.login_server
 }
 
 output "acr_name" {
@@ -12,7 +12,7 @@ output "acr_name" {
 
 output "resource_group_name" {
   description = "Resource group containing everything for this project!"
-  value = azurerm_resource_group.name
+  value = azurerm_resource_group.rg.name
 }
 
 output "aks_cluster_name" {

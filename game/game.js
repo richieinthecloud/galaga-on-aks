@@ -199,7 +199,7 @@ to load, the game draws a colored shape instead, so it stays playable even befor
         bullets = bullets.filter((b) => b.y + b.h > 0);
 
         // collision: enemy bullets vs player
-        enemiesBullets.forEach((b) => {
+        enemyBullets.forEach((b) => {
             if (rectsOverlap(b, player)) {
                 b.y = H + 999;
                 loseLife();

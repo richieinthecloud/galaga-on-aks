@@ -1,0 +1,45 @@
+# Deployment tells K8S how to run our game container
+# It keeps a desired number of identical pods alive and replaces any that may die
+
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: galaga
+  labels:
+    app: galaga
+spec:
+# starting with two replicas so we don't risk a single point of failure
+# the horizontalpodautoscaler adjusts this number at runtime.
+  replicas: 2
+  selector:
+    matchLabels:
+      app: galaga # this Deployment manages Pods with label 'app=galaga'
+  template:
+    metadata:
+      labels:
+        app: galga # every pod gets this label here
+    spec:
+      containers:
+        - name: galaga
+          image: <acr_login_server>/galaga:v1 # replace this with real registry hostname
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m # 0.05 of a CPU core
+              memory: 32Mi
+            limits:
+              cpu: 200m # 0.2 of a CPU core
+              memory: 64Mi
+          LivenessProbe: # if /healthz stops responding, K8s starts the pod automatically
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5

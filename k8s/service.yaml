@@ -1,0 +1,18 @@
+# Service: gives our group of pods ONE table network endpoint
+# provides load balancing as well. If a pod dies, the IP doesn't switch up
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: galaga
+  labels:
+    app: galaga
+spec:
+  type: LoadBalancer
+  selector:
+    app: galaga # send traffic to every pod labeled 'app=galaga'
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80       # port the public load balancer listens on
+      targetPort: 80 # port on the container to forward traffic to

@@ -1,0 +1,27 @@
+# HorizontalPodAutoscaler: kind of explains itself
+# Requires metrics (AKS sends these by default) + CPU requests on the 
+# Deployment, which we set in another file
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: galaga
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: galaga # which Deployment to scale
+  minReplicas: 2 # never drop below 2 instances
+  maxReplicas: 10 # hard ceiling for budget purposes
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization # scale OUT when average CPU exceeds 50% of the requested 50m
+          averageUtilization: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 120 # wait two minutes before scaling down. Prevents flapping
+    scaleUp:
+      stabilizationWindowSeconds: 0 # scale up immediately under pressure
